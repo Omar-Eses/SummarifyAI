@@ -8,8 +8,6 @@ from langchain.chains import LLMChain
 from prompts import *
 import json
 
-api_key="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"
-
 class ChatBotAssistant:
   def __init__(self, uploaded_file, model_name="gpt-3.5-turbo-1106", embedding_model_name="text-embedding-ada-002",summary_length = 3,details_level = "abstract"):
     # Read the file
@@ -65,12 +63,3 @@ class ChatBotAssistant:
 
   def chat_bot(self,question):
     return self.conversation({"question": question})['text']
-  
-
-
-bot=ChatBotAssistant('/Users/thajnaser001/Downloads/lekl101.pdf')
-#print(bot.generate_summary())
-#print(bot.generate_named_entity_recognition())
-while True:
-  q=input('ask: ')
-  print(bot.chat_bot(q))
