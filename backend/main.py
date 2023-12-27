@@ -48,13 +48,11 @@ async def create_upload_file(file_upload: UploadFile,
     return await generate_summary()
 
 
-
-
 @app.post("/summary/")
 async def generate_summary():
     try:
-        summary_result = chat_bot_assistant.summarization()
-        ner_result = chat_bot_assistant.named_entity_recognition()
+        summary_result = chat_bot_assistant.generate_summary()
+        ner_result = chat_bot_assistant.generate_named_entity_recognition()
         return {
             "summary result": summary_result,
             "ner result": ner_result,    
@@ -78,10 +76,10 @@ async def chat_bot(websocket: WebSocket):
     print("accepted")
     while True:
         try:
-            data = await websocket.receive_text
-            print(data)
-            response = await chat_bot_assistant.send(data)
+            user_input = await websocket.receive_text
+            print(user_input)
+            response = await chat_bot_assistant.send(user_input)
             await websocket.send_text(response)
         except Exception as err:
-            return {"chatbot error": str(err)}
+            return {"Chatbot error. Please refresh the page. ": str(err)}
 

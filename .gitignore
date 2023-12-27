@@ -1,2 +1,3 @@
 venv_sai
 backend/__pycache__
+.env
