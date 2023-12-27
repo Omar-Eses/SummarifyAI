@@ -1,5 +1,7 @@
-import shutil
-from fastapi import FastAPI, WebSocket, UploadFile
+import os
+
+import uvicorn
+from fastapi import FastAPI, WebSocket, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from chatbot import ChatBotAssistant
@@ -7,14 +9,7 @@ from chatbot import ChatBotAssistant
 UPLOAD_DIR = Path(__file__).resolve().parent / 'uploads'
 app = FastAPI()
 save_to = ""
-# instantiate empty object from chatbot class
-def delete_loaded_file(folder_path):
-    for file_path in UPLOAD_DIR.glob('*'):
-        try:
-            if file_path.is_file():
-                file_path.unlink()
-        except Exception as e:
-            print(f"Error deleting file {file_path}: {e}")
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,62 +19,76 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.post("/uploadfile/")
 async def create_upload_file(file_upload: UploadFile,
                              summary_length: int = 3,
                              details_level: str = "abstract"):
-    
     global chat_bot_assistant
     data = await file_upload.read()
     save_to = UPLOAD_DIR / file_upload.filename
-    delete_loaded_file(str(save_to))
+    delete_loaded_file()
 
     with open(save_to, 'wb') as f:
         f.write(data)
 
-    chat_bot_assistant = ChatBotAssistant(str(save_to), 
-                                        model_name="gpt-3.5-turbo-1106", 
-                                        embedding_model_name="text-embedding-ada-002",
-                                        summary_length=summary_length, 
-                                        details_level=details_level)
+    chat_bot_assistant = ChatBotAssistant(str(save_to),
+                                          model_name="gpt-3.5-turbo-1106",
+                                          embedding_model_name="text-embedding-ada-002",
+                                          summary_length=summary_length,
+                                          details_level=details_level)
     chat_bot_assistant.uploaded_file = str(save_to)
-    summary_and_ner = await generate_summary()
+    summary_and_ner = generate_summary()
     print(summary_and_ner)
-    return await generate_summary()
-
-
-@app.post("/summary/")
-async def generate_summary():
-    try:
-        summary_result = chat_bot_assistant.generate_summary()
-        ner_result = chat_bot_assistant.generate_named_entity_recognition()
-        return {
-            "summary result": summary_result,
-            "ner result": ner_result,    
-            }
-    except Exception as err:
-        return {"summary error": str(err)}
+    return summary_and_ner
 
 @app.websocket("/ner")
 async def generate_ner():
     try:
         ner_result = chat_bot_assistant.named_entity_recognition()
 
-        return {"named entity recognition result": ner_result}
+        return {"ner": ner_result}
     except Exception as err:
-        return {"named entity recognition error": str(err)}
+        raise HTTPException(status_code=500, detail={"error_code": "ner_error", "error_message": str(err)})
+
 
 @app.websocket("/ws")
-async def chat_bot(websocket: WebSocket):
+async def chat_bot(websocket:WebSocket):
     print("connecting")
-    await websocket.accept
+    await websocket.accept()
     print("accepted")
     while True:
         try:
-            user_input = await websocket.receive_text
-            print(user_input)
-            response = await chat_bot_assistant.send(user_input)
-            await websocket.send_text(response)
-        except Exception as err:
-            return {"Chatbot error. Please refresh the page. ": str(err)}
+           data = await websocket.receive_text()
+           print(data)
+           resposne = chat_bot_assistant.chat_bot(data)
+           print("resposne:" + resposne)
+           await websocket.send_json({"resposne": resposne})
+        except Exception as e:
+            pass
+            break
+
+def generate_summary():
+    try:
+        summary_result = chat_bot_assistant.generate_summary()
+        ner_result = chat_bot_assistant.generate_named_entity_recognition()
+        return {
+            "summary": summary_result,
+            "ner": ner_result,
+        }
+    except Exception as err:
+        raise HTTPException(status_code=500, detail={"error_code": "summary_error", "error_message": str(err)})
+
+# instantiate empty object from chatbot class
+def delete_loaded_file():
+    for file_path in UPLOAD_DIR.glob('*'):
+        try:
+            if file_path.is_file():
+                file_path.unlink()
+        except Exception as e:
+            print(f"Error deleting file {file_path}: {e}")
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
