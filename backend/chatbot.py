@@ -6,7 +6,14 @@ from langchain.prompts.chat import SystemMessagePromptTemplate,HumanMessagePromp
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import LLMChain
 from prompts import *
+import openai
 import json
+import os 
+from dotenv import load_dotenv, find_dotenv
+_ = load_dotenv(find_dotenv())
+
+openai.api_key = os.environ['OPENAI_API_KEY']
+
 
 class ChatBotAssistant:
   def __init__(self, uploaded_file, model_name="gpt-3.5-turbo-1106", embedding_model_name="text-embedding-ada-002",summary_length = 3,details_level = "abstract"):
@@ -20,7 +27,7 @@ class ChatBotAssistant:
 
     # Define LLM
     self.model_name = model_name
-    self.llm = ChatOpenAI(temperature=0.0, model_name=self.model_name,api_key=api_key)
+    self.llm = ChatOpenAI(temperature=0.0, model_name=self.model_name)
 
     # Check number of tokens
     self.allowed = self.isAllowed()
