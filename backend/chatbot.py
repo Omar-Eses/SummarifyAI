@@ -16,17 +16,18 @@ openai.api_key = os.environ['OPENAI_API_KEY']
 
 
 class ChatBotAssistant:
-  def __init__(self, uploaded_file, model_name="gpt-3.5-turbo-1106", embedding_model_name="text-embedding-ada-002",summary_length = 3,details_level = "abstract"):
+  def __init__(self, uploaded_file, model_name="gpt-3.5-turbo-1106", embedding_model_name="text-embedding-ada-002",summary_length = 3, details_level = "abstract"):
+    self.uploaded_file = uploaded_file
+    self.model_name = model_name
+    self.embedding_model_name = embedding_model_name
+    self.summary_length = summary_length
+    self.details_level = details_level
     # Read the file
-    if(uploaded_file.endswith('pdf')):
-      loader = PyPDFLoader(uploaded_file)
-    else:
-      loader = Docx2txtLoader(uploaded_file)
+    loader = self.get_loader()
 
     self.pages = loader.load()
 
     # Define LLM
-    self.model_name = model_name
     self.llm = ChatOpenAI(temperature=0.0, model_name=self.model_name)
 
     # Check number of tokens
@@ -61,6 +62,14 @@ class ChatBotAssistant:
       num_tokens = len(encoding.encode("".join([page.page_content for page in self.pages])))
       MAX_TOKEN = 15000
       return num_tokens<MAX_TOKEN
+  
+  def get_loader(self):
+    _, file_extension = os.path.splitext(self.uploaded_file)
+    if file_extension.lower() == ".pdf":
+      return PyPDFLoader(self.uploaded_file)
+    
+    return Docx2txtLoader(self.uploaded_file)
+
 
   def generate_summary(self):
     return self.llm.invoke(self.summary_prompt.format(text=self.context, number_of_sentences=self.num_of_sent,level_of_detail=self.lvl_of_det)).content
