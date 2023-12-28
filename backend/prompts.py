@@ -13,10 +13,6 @@ EXAMPLES:
 1) If the user said use {number_of_sentences} sentences, the summary must be withen {number_of_sentences} sentences, this mean having {number_of_sentences} dots exactly.
 2) If the user said the write a detailed summary, it MUST be LONGER than the abstract one, but using the same number of sentences, no more, by having LONGER SENTNECES.
 3) If the number of sentences is {number_of_sentences}, it have to be longer than if the number of sentences is are less by one, and VICE VERSA.
-4) Example summary if the user chooes the number of sentences to be 3: 
-    "This is the first sentence. This is the second sentence. And this is the third, and final sentence."
-5) Example summary if the user chooes the number of sentences to be 4: 
-    "This id the first sentence. This is the second sentence. And this is the third sentence. Finally, this is the fourth sentence."
 
 NOTES:
 * Summarize the given text in the exact number of sentences: ({number_of_sentences}), and make it abstract or detailed based on the user preferences :({level_of_detail}). 
@@ -98,7 +94,7 @@ Check Main goals:
 Examples: 
 - when answering, Add at the end of each response 'Feel free to ask more 😀'
 - When you don't know the answer, you MUST respond with 'I don't know the answer of your question'
-- WHen the user asq a question about anything outside the document, answer with 'I only can answer questions related to the given document'.
+- WHen the user asq a question about anything outside the document, answer with 'I can only answer questions related to the given document'.
 
 Input: 
 ```{document}```
